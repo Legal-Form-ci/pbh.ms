@@ -14,7 +14,173 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contact_requests: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string
+          status: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone: string
+          status?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string
+          status?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          country: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          region: string
+          source: string | null
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone: string
+          region: string
+          source?: string | null
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+          region?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
+      portfolio_projects: {
+        Row: {
+          budget_range: string | null
+          completion_date: string | null
+          created_at: string
+          description: string
+          duration_months: number | null
+          id: string
+          image_url: string | null
+          location: string
+          project_type: string
+          status: string | null
+          surface_area: number | null
+          title: string
+        }
+        Insert: {
+          budget_range?: string | null
+          completion_date?: string | null
+          created_at?: string
+          description: string
+          duration_months?: number | null
+          id?: string
+          image_url?: string | null
+          location: string
+          project_type: string
+          status?: string | null
+          surface_area?: number | null
+          title: string
+        }
+        Update: {
+          budget_range?: string | null
+          completion_date?: string | null
+          created_at?: string
+          description?: string
+          duration_months?: number | null
+          id?: string
+          image_url?: string | null
+          location?: string
+          project_type?: string
+          status?: string | null
+          surface_area?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
+      simulations: {
+        Row: {
+          created_at: string
+          estimated_budget: number | null
+          estimated_construction_months: number | null
+          id: string
+          lead_id: string | null
+          loan_amount: number | null
+          loan_duration_months: number | null
+          location: string
+          monthly_payment: number | null
+          project_type: string
+          quality_level: string
+          surface_area: number
+        }
+        Insert: {
+          created_at?: string
+          estimated_budget?: number | null
+          estimated_construction_months?: number | null
+          id?: string
+          lead_id?: string | null
+          loan_amount?: number | null
+          loan_duration_months?: number | null
+          location: string
+          monthly_payment?: number | null
+          project_type: string
+          quality_level: string
+          surface_area: number
+        }
+        Update: {
+          created_at?: string
+          estimated_budget?: number | null
+          estimated_construction_months?: number | null
+          id?: string
+          lead_id?: string | null
+          loan_amount?: number | null
+          loan_duration_months?: number | null
+          location?: string
+          monthly_payment?: number | null
+          project_type?: string
+          quality_level?: string
+          surface_area?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

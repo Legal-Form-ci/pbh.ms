@@ -2,46 +2,52 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link, useLocation } from 'react-router-dom';
 import logo from '@/assets/logo-pbhms.png';
 
 const navLinks = [
-  { label: 'Accueil', href: '#accueil' },
-  { label: 'Services', href: '#services' },
-  { label: 'Sécurité', href: '#securite' },
-  { label: 'Vision', href: '#vision' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Accueil', href: '/' },
+  { label: 'Services', href: '/services' },
+  { label: 'Portfolio', href: '/portfolio' },
+  { label: 'Simulateur', href: '/simulateur' },
+  { label: 'À propos', href: '/a-propos' },
 ];
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <a href="#accueil" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <img src={logo} alt="PBH.M.S Logo" className="h-14 w-auto" />
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.href}
-                href={link.href}
-                className="text-foreground/80 hover:text-gold font-medium transition-colors duration-300"
+                to={link.href}
+                className={`font-medium transition-colors duration-300 ${
+                  location.pathname === link.href ? 'text-gold' : 'text-foreground/80 hover:text-gold'
+                }`}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </div>
 
           {/* CTA Button */}
           <div className="hidden lg:block">
-            <Button variant="gold" size="default">
-              Démarrer un projet
-            </Button>
+            <Link to="/simulateur">
+              <Button variant="gold" size="default">
+                Démarrer un projet
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -66,18 +72,22 @@ export default function Navbar() {
           >
             <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.href}
-                  href={link.href}
-                  className="text-foreground/80 hover:text-gold font-medium py-2 transition-colors"
+                  to={link.href}
+                  className={`font-medium py-2 transition-colors ${
+                    location.pathname === link.href ? 'text-gold' : 'text-foreground/80 hover:text-gold'
+                  }`}
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
-              <Button variant="gold" className="mt-4 w-full">
-                Démarrer un projet
-              </Button>
+              <Link to="/simulateur" onClick={() => setIsOpen(false)}>
+                <Button variant="gold" className="mt-4 w-full">
+                  Démarrer un projet
+                </Button>
+              </Link>
             </div>
           </motion.div>
         )}
