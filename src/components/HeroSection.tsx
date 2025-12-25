@@ -1,10 +1,18 @@
 import { motion } from 'framer-motion';
 import { Shield, Building2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import heroImage from '@/assets/hero-construction.jpg';
 import logo from '@/assets/logo-pbhms.png';
 
 export default function HeroSection() {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section
       id="accueil"
@@ -67,11 +75,17 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.6 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Button variant="hero" size="lg" className="group">
-              Démarrer mon projet
-              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+            <Button variant="hero" size="lg" className="group" asChild>
+              <Link to="/simulateur">
+                Démarrer mon projet
+                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </Button>
-            <Button variant="outline-light" size="lg">
+            <Button 
+              variant="outline-light" 
+              size="lg"
+              onClick={() => scrollToSection('about')}
+            >
               En savoir plus
             </Button>
           </motion.div>
