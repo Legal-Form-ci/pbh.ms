@@ -10,6 +10,32 @@ import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+import { z } from 'zod';
+
+// Validation schema for simulation data
+const simulationSchema = z.object({
+  project_type: z.string().min(1, "Type de projet requis").max(100),
+  surface_area: z.number().int().min(10, "Surface minimum 10m²").max(10000, "Surface maximum 10000m²"),
+  location: z.string().min(1, "Localisation requise").max(200),
+  quality_level: z.string().min(1, "Niveau de qualité requis").max(100),
+  estimated_budget: z.number().min(0).max(100000000000).nullable().optional(),
+  loan_amount: z.number().min(0).max(100000000000).nullable().optional(),
+  loan_duration_months: z.number().int().min(1).max(600).nullable().optional(),
+  monthly_payment: z.number().min(0).max(100000000000).nullable().optional(),
+  estimated_construction_months: z.number().int().min(1).max(120).nullable().optional(),
+});
+
+type SimulationInsert = {
+  project_type: string;
+  surface_area: number;
+  location: string;
+  quality_level: string;
+  estimated_budget?: number | null;
+  loan_amount?: number | null;
+  loan_duration_months?: number | null;
+  monthly_payment?: number | null;
+  estimated_construction_months?: number | null;
+};
 
 // Prix au m² selon le type et la qualité (en FCFA)
 const PRICE_PER_SQM: Record<string, Record<string, number>> = {
@@ -130,19 +156,35 @@ export default function Simulator() {
   const saveSimulation = async () => {
     setIsSubmitting(true);
     try {
+      // Prepare and validate simulation data
+      const simulationData = {
+        project_type: formData.projectType,
+        surface_area: formData.surfaceArea,
+        location: formData.location,
+        quality_level: formData.qualityLevel,
+        estimated_budget: results?.estimatedBudget,
+        loan_amount: formData.loanAmount || results?.estimatedBudget,
+        loan_duration_months: formData.loanDuration,
+        monthly_payment: results?.monthlyPayment,
+        estimated_construction_months: results?.constructionDuration.max,
+      };
+
+      // Validate data before insertion
+      const validationResult = simulationSchema.safeParse(simulationData);
+      
+      if (!validationResult.success) {
+        const errorMessages = validationResult.error.errors.map(e => e.message).join(', ');
+        toast({
+          title: "Erreur de validation",
+          description: errorMessages,
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('simulations')
-        .insert({
-          project_type: formData.projectType,
-          surface_area: formData.surfaceArea,
-          location: formData.location,
-          quality_level: formData.qualityLevel,
-          estimated_budget: results?.estimatedBudget,
-          loan_amount: formData.loanAmount || results?.estimatedBudget,
-          loan_duration_months: formData.loanDuration,
-          monthly_payment: results?.monthlyPayment,
-          estimated_construction_months: results?.constructionDuration.max,
-        });
+        .insert([validationResult.data as SimulationInsert]);
 
       if (error) throw error;
 
