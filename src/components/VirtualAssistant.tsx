@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, User, Mail, Phone, MapPin, CheckCircle, Bot, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, User, Mail, Phone, MapPin, CheckCircle, Bot, Loader2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 type Step = 'welcome' | 'firstName' | 'lastName' | 'email' | 'phone' | 'region' | 'registered' | 'chat';
 
@@ -30,18 +31,13 @@ const regions = [
   "Autre ville"
 ];
 
-const quickQuestions = [
-  "Je veux construire une maison",
-  "Comment fonctionne le financement ?",
-  "Quels sont vos tarifs ?",
-  "Je veux un devis",
-];
-
 export default function VirtualAssistant() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [step, setStep] = useState<Step>('welcome');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,14 +54,21 @@ export default function VirtualAssistant() {
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  // Show assistant after 3 seconds on first visit
+  const quickQuestions = [
+    t('assistant.q_prices'),
+    t('assistant.q_delays'),
+    t('assistant.q_financing'),
+    t('assistant.q_quote'),
+  ];
+
+  // Show assistant after 5 seconds on first visit
   useEffect(() => {
     const hasVisited = localStorage.getItem('pbhms_visited');
     if (!hasVisited) {
       const timer = setTimeout(() => {
         setIsOpen(true);
         localStorage.setItem('pbhms_visited', 'true');
-      }, 3000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -74,6 +77,19 @@ export default function VirtualAssistant() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setIsMinimized(false);
+  };
+
+  const handleMinimize = () => {
+    setIsMinimized(true);
+  };
+
+  const handleRestore = () => {
+    setIsMinimized(false);
+  };
 
   const handleInputChange = (value: string) => {
     const fieldMap: Record<Step, keyof typeof formData> = {
@@ -124,12 +140,12 @@ export default function VirtualAssistant() {
       setMessages([{
         id: '1',
         role: 'assistant',
-        content: `Merci ${formData.firstName} ! 🎉 Vos informations ont été enregistrées. Maintenant, comment puis-je vous aider avec votre projet immobilier ?`,
+        content: `${t('assistant.thank_you')} ${formData.firstName} ! 🎉`,
         timestamp: new Date(),
       }]);
     } catch (error) {
       toast({
-        title: "Erreur",
+        title: t('common.error'),
         description: "Une erreur s'est produite. Veuillez réessayer.",
         variant: "destructive",
       });
@@ -170,13 +186,13 @@ export default function VirtualAssistant() {
     // Simulate assistant response
     setTimeout(() => {
       const responses: Record<string, string> = {
-        "Je veux construire une maison": `Excellent choix ${formData.firstName} ! 🏠 Chez PBH.M.S, nous vous accompagnons de A à Z. Pour commencer, je vous invite à utiliser notre simulateur de projet pour avoir une estimation personnalisée. Rendez-vous sur la page Simulateur ou contactez-nous directement au +225 07 79 26 16 39.`,
-        "Comment fonctionne le financement ?": `Notre système de financement est sécurisé via un compte séquestre bancaire. Vos fonds sont débloqués progressivement selon l'avancement des travaux, ce qui vous garantit une transparence totale. Souhaitez-vous plus de détails sur nos offres de crédit ?`,
-        "Quels sont vos tarifs ?": `Nos tarifs varient selon le type de construction, la surface et le niveau de finition. En général, comptez entre 150 000 et 450 000 FCFA/m². Utilisez notre simulateur pour une estimation précise adaptée à votre projet !`,
-        "Je veux un devis": `Pour un devis personnalisé, notre équipe commerciale vous contactera dans les 24h. En attendant, vous pouvez utiliser notre simulateur pour avoir une première estimation. Avez-vous des questions spécifiques sur votre projet ?`,
+        [t('assistant.q_prices')]: `Nos tarifs varient selon le type de construction, la surface et le niveau de finition. En général, comptez entre 150 000 et 450 000 FCFA/m². Utilisez notre simulateur pour une estimation précise !`,
+        [t('assistant.q_delays')]: `Les délais varient selon le projet. Une maison standard prend généralement 6-9 mois. Une villa de luxe peut prendre 12-18 mois.`,
+        [t('assistant.q_financing')]: `Oui ! Nous proposons un système de compte séquestre sécurisé avec notre banque partenaire. Vos fonds sont protégés et ne sont libérés qu'après validation de chaque étape des travaux.`,
+        [t('assistant.q_quote')]: `Pour un devis personnalisé, utilisez notre simulateur en ligne ou contactez-nous directement au +225 07 79 26 16 39. Notre équipe vous répondra sous 24h.`,
       };
 
-      const response = responses[text] || `Merci pour votre message ${formData.firstName} ! Un conseiller PBH.M.S vous contactera très bientôt au ${formData.phone} pour discuter de votre demande en détail. En attendant, n'hésitez pas à explorer notre site ou à utiliser le simulateur de projet.`;
+      const response = responses[text] || `Merci pour votre message ${formData.firstName} ! Un conseiller PBH.M.S vous contactera très bientôt pour discuter de votre demande en détail.`;
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -200,8 +216,8 @@ export default function VirtualAssistant() {
     switch (step) {
       case 'welcome':
         return {
-          title: "Bienvenue chez PBH.M.S ! 👋",
-          message: "Je suis votre assistant virtuel. Je suis là pour vous aider à démarrer votre projet de construction. Puis-je vous poser quelques questions rapides ?",
+          title: t('assistant.welcome'),
+          message: "Je suis là pour vous aider à démarrer votre projet de construction. Puis-je vous poser quelques questions rapides ?",
           action: (
             <Button variant="gold" onClick={() => nextStep()} className="w-full">
               Oui, commençons !
@@ -211,7 +227,7 @@ export default function VirtualAssistant() {
       case 'firstName':
         return {
           title: "Ravi de vous rencontrer !",
-          message: "Quel est votre prénom ?",
+          message: t('assistant.name_prompt'),
           icon: <User className="w-5 h-5" />,
           input: true,
           placeholder: "Votre prénom",
@@ -229,7 +245,7 @@ export default function VirtualAssistant() {
       case 'email':
         return {
           title: "Parfait !",
-          message: "Quelle est votre adresse email ?",
+          message: t('assistant.email_prompt'),
           icon: <Mail className="w-5 h-5" />,
           input: true,
           placeholder: "votre@email.com",
@@ -239,7 +255,7 @@ export default function VirtualAssistant() {
       case 'phone':
         return {
           title: "Super !",
-          message: "Votre numéro de téléphone (WhatsApp de préférence) ?",
+          message: t('assistant.phone_prompt'),
           icon: <Phone className="w-5 h-5" />,
           input: true,
           placeholder: "+225 XX XX XX XX XX",
@@ -249,7 +265,7 @@ export default function VirtualAssistant() {
       case 'region':
         return {
           title: "Dernière question !",
-          message: "Dans quelle région/ville souhaitez-vous construire ?",
+          message: t('assistant.region_prompt'),
           icon: <MapPin className="w-5 h-5" />,
           options: regions,
         };
@@ -272,7 +288,7 @@ export default function VirtualAssistant() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Always visible when chat is closed */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -291,38 +307,71 @@ export default function VirtualAssistant() {
         )}
       </AnimatePresence>
 
+      {/* Minimized Bar */}
+      <AnimatePresence>
+        {isOpen && isMinimized && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 right-6 z-50 bg-navy-dark text-primary-foreground rounded-full shadow-lg px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-navy transition-colors"
+            onClick={handleRestore}
+          >
+            <Bot className="w-5 h-5 text-gold" />
+            <span className="text-sm font-medium">Assistant PBH.M.S</span>
+            <X 
+              className="w-4 h-4 opacity-70 hover:opacity-100" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClose();
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Chat Window */}
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && !isMinimized && (
           <motion.div
             initial={{ opacity: 0, y: 100, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.9 }}
-            className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            style={{ maxHeight: 'min(600px, calc(100vh - 6rem))' }}
+            className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            style={{ maxHeight: 'min(550px, calc(100vh - 8rem))' }}
           >
             {/* Header */}
-            <div className="bg-gradient-primary p-4 flex items-center justify-between flex-shrink-0">
+            <div className="bg-navy-dark p-4 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-white">Assistant PBH.M.S</h4>
-                  <p className="text-white/70 text-sm">En ligne</p>
+                  <h4 className="font-semibold text-primary-foreground">{t('assistant.title')}</h4>
+                  <p className="text-primary-foreground/70 text-sm">En ligne</p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-white/70 hover:text-white transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleMinimize}
+                  className="text-primary-foreground/70 hover:text-primary-foreground transition-colors p-1"
+                  aria-label="Minimize"
+                >
+                  <Minimize2 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="text-primary-foreground/70 hover:text-primary-foreground transition-colors p-1"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Content */}
             {step !== 'chat' ? (
-              <div className="p-5 min-h-[280px] flex flex-col">
+              <div className="p-5 min-h-[280px] flex flex-col overflow-y-auto">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={step}
@@ -368,13 +417,13 @@ export default function VirtualAssistant() {
                           onClick={() => step === 'phone' ? handleSubmitLead() : nextStep()}
                           disabled={!content.value || isSubmitting}
                         >
-                          {isSubmitting ? '...' : <Send className="w-4 h-4" />}
+                          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         </Button>
                       </div>
                     )}
 
                     {content.options && (
-                      <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
+                      <div className="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto">
                         {content.options.map((option) => (
                           <Button
                             key={option}
@@ -404,7 +453,7 @@ export default function VirtualAssistant() {
             ) : (
               /* Chat Mode */
               <>
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ maxHeight: '300px' }}>
                   {messages.map((msg) => (
                     <motion.div
                       key={msg.id}
@@ -442,7 +491,7 @@ export default function VirtualAssistant() {
                 {/* Quick Questions */}
                 {messages.length <= 1 && (
                   <div className="px-4 pb-2">
-                    <p className="text-xs text-muted-foreground mb-2">Questions fréquentes :</p>
+                    <p className="text-xs text-muted-foreground mb-2">{t('assistant.quick_questions')} :</p>
                     <div className="flex flex-wrap gap-2">
                       {quickQuestions.map((q) => (
                         <button
@@ -465,7 +514,7 @@ export default function VirtualAssistant() {
                       value={currentMessage}
                       onChange={(e) => setCurrentMessage(e.target.value)}
                       onKeyPress={handleChatKeyPress}
-                      className="min-h-[44px] max-h-[100px] resize-none"
+                      className="min-h-[44px] max-h-[80px] resize-none"
                       rows={1}
                     />
                     <Button

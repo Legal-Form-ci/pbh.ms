@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/i18n/LanguageContext";
 import Index from "./pages/Index";
 import Portfolio from "./pages/Portfolio";
 import Simulator from "./pages/Simulator";
@@ -11,30 +12,45 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import Admin from "./pages/Admin";
 import AdminAuth from "./pages/AdminAuth";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminSetup from "./pages/AdminSetup";
+import ClientAuth from "./pages/ClientAuth";
+import ClientDashboard from "./pages/ClientDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/simulateur" element={<Simulator />} />
-            <Route path="/a-propos" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/login" element={<AdminAuth />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/simulateur" element={<Simulator />} />
+              <Route path="/a-propos" element={<About />} />
+              <Route path="/services" element={<Services />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/login" element={<AdminAuth />} />
+              <Route path="/admin/setup" element={<AdminSetup />} />
+              <Route path="/admin/legacy" element={<Admin />} />
+              
+              {/* Client Routes */}
+              <Route path="/espace-client" element={<ClientDashboard />} />
+              <Route path="/espace-client/connexion" element={<ClientAuth />} />
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 
