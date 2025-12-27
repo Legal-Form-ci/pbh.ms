@@ -128,8 +128,200 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      project_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_url: string
+          id: string
+          name: string
+          project_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_url: string
+          id?: string
+          name: string
+          project_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_url?: string
+          id?: string
+          name?: string
+          project_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_updates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          progress_percentage: number | null
+          project_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          progress_percentage?: number | null
+          project_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          progress_percentage?: number | null
+          project_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_updates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          actual_completion_date: string | null
+          client_id: string
+          construction_progress: number | null
+          construction_status: string | null
+          created_at: string
+          description: string | null
+          escrow_account_status: string | null
+          escrow_amount: number | null
+          escrow_bank: string | null
+          estimated_budget: number | null
+          estimated_completion_date: string | null
+          expert_validation_date: string | null
+          expert_validation_status: string | null
+          id: string
+          keys_delivered_date: string | null
+          location: string
+          project_type: string
+          quality_level: string
+          start_date: string | null
+          surface_area: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_completion_date?: string | null
+          client_id: string
+          construction_progress?: number | null
+          construction_status?: string | null
+          created_at?: string
+          description?: string | null
+          escrow_account_status?: string | null
+          escrow_amount?: number | null
+          escrow_bank?: string | null
+          estimated_budget?: number | null
+          estimated_completion_date?: string | null
+          expert_validation_date?: string | null
+          expert_validation_status?: string | null
+          id?: string
+          keys_delivered_date?: string | null
+          location: string
+          project_type: string
+          quality_level: string
+          start_date?: string | null
+          surface_area: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_completion_date?: string | null
+          client_id?: string
+          construction_progress?: number | null
+          construction_status?: string | null
+          created_at?: string
+          description?: string | null
+          escrow_account_status?: string | null
+          escrow_amount?: number | null
+          escrow_bank?: string | null
+          estimated_budget?: number | null
+          estimated_completion_date?: string | null
+          expert_validation_date?: string | null
+          expert_validation_status?: string | null
+          id?: string
+          keys_delivered_date?: string | null
+          location?: string
+          project_type?: string
+          quality_level?: string
+          start_date?: string | null
+          surface_area?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       simulations: {
         Row: {
+          client_id: string | null
+          converted_to_project_id: string | null
           created_at: string
           estimated_budget: number | null
           estimated_construction_months: number | null
@@ -141,9 +333,14 @@ export type Database = {
           monthly_payment: number | null
           project_type: string
           quality_level: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
           surface_area: number
         }
         Insert: {
+          client_id?: string | null
+          converted_to_project_id?: string | null
           created_at?: string
           estimated_budget?: number | null
           estimated_construction_months?: number | null
@@ -155,9 +352,14 @@ export type Database = {
           monthly_payment?: number | null
           project_type: string
           quality_level: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
           surface_area: number
         }
         Update: {
+          client_id?: string | null
+          converted_to_project_id?: string | null
           created_at?: string
           estimated_budget?: number | null
           estimated_construction_months?: number | null
@@ -169,9 +371,19 @@ export type Database = {
           monthly_payment?: number | null
           project_type?: string
           quality_level?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
           surface_area?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "simulations_converted_to_project_id_fkey"
+            columns: ["converted_to_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "simulations_lead_id_fkey"
             columns: ["lead_id"]
@@ -216,7 +428,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -344,7 +556,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "client"],
     },
   },
 } as const
