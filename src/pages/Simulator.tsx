@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, Home, CreditCard, Clock, ChevronRight, CheckCircle, Building2 } from 'lucide-react';
+import { Calculator, Home, Shield, Clock, ChevronRight, CheckCircle, Building2, Landmark, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 // Validation schema for simulation data
 const simulationSchema = z.object({
@@ -19,9 +20,6 @@ const simulationSchema = z.object({
   location: z.string().min(1, "Localisation requise").max(200),
   quality_level: z.string().min(1, "Niveau de qualité requis").max(100),
   estimated_budget: z.number().min(0).max(100000000000).nullable().optional(),
-  loan_amount: z.number().min(0).max(100000000000).nullable().optional(),
-  loan_duration_months: z.number().int().min(1).max(600).nullable().optional(),
-  monthly_payment: z.number().min(0).max(100000000000).nullable().optional(),
   estimated_construction_months: z.number().int().min(1).max(120).nullable().optional(),
 });
 
@@ -31,9 +29,6 @@ type SimulationInsert = {
   location: string;
   quality_level: string;
   estimated_budget?: number | null;
-  loan_amount?: number | null;
-  loan_duration_months?: number | null;
-  monthly_payment?: number | null;
   estimated_construction_months?: number | null;
 };
 
@@ -97,10 +92,11 @@ const DURATION_MONTHS: Record<string, Record<string, { min: number; max: number 
 
 const projectTypes = ['Maison économique', 'Villa standard', 'Villa de luxe', 'Duplex', 'Immeuble'];
 const qualityLevels = ['Économique', 'Standard', 'Premium'];
-const locations = ['Abidjan - Centre', 'Abidjan - Périphérie', 'Yamoussoukro', 'Bouaké', 'Autres villes'];
+const locations = ['Abidjan - Centre', 'Abidjan - Périphérie', 'Yamoussoukro', 'Bouaké', 'Daloa', 'Autres villes'];
 
 export default function Simulator() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -108,15 +104,13 @@ export default function Simulator() {
     surfaceArea: 150,
     location: '',
     qualityLevel: '',
-    loanAmount: 0,
-    loanDuration: 180, // en mois (15 ans)
-    interestRate: 7.5, // taux annuel
+    clientName: '',
+    clientEmail: '',
+    clientPhone: '',
   });
 
   const [results, setResults] = useState<{
     estimatedBudget: number;
-    monthlyPayment: number;
-    totalInterest: number;
     constructionDuration: { min: number; max: number };
   } | null>(null);
 
@@ -125,24 +119,9 @@ export default function Simulator() {
     const estimatedBudget = formData.surfaceArea * pricePerSqm;
     
     const duration = DURATION_MONTHS[formData.projectType]?.[formData.qualityLevel] || { min: 8, max: 12 };
-    
-    // Calcul du crédit
-    const loanAmount = formData.loanAmount || estimatedBudget;
-    const monthlyRate = formData.interestRate / 100 / 12;
-    const numPayments = formData.loanDuration;
-    
-    let monthlyPayment = 0;
-    let totalInterest = 0;
-    
-    if (loanAmount > 0 && formData.interestRate > 0) {
-      monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
-      totalInterest = (monthlyPayment * numPayments) - loanAmount;
-    }
 
     setResults({
       estimatedBudget,
-      monthlyPayment: Math.round(monthlyPayment),
-      totalInterest: Math.round(totalInterest),
       constructionDuration: duration,
     });
 
@@ -163,9 +142,6 @@ export default function Simulator() {
         location: formData.location,
         quality_level: formData.qualityLevel,
         estimated_budget: results?.estimatedBudget,
-        loan_amount: formData.loanAmount || results?.estimatedBudget,
-        loan_duration_months: formData.loanDuration,
-        monthly_payment: results?.monthlyPayment,
         estimated_construction_months: results?.constructionDuration.max,
       };
 
@@ -190,7 +166,7 @@ export default function Simulator() {
 
       toast({
         title: "Simulation enregistrée !",
-        description: "Notre équipe vous contactera bientôt pour discuter de votre projet.",
+        description: "Notre équipe vous contactera pour vous accompagner dans l'ouverture de votre compte séquestre.",
       });
     } catch (error) {
       toast({
@@ -218,16 +194,35 @@ export default function Simulator() {
           >
             <div className="inline-flex items-center gap-2 bg-gold/20 text-gold px-4 py-2 rounded-full text-sm font-semibold mb-6">
               <Calculator className="w-4 h-4" />
-              Simulateur complet
+              {t('simulator_title')}
             </div>
             <h1 className="font-display text-4xl lg:text-5xl font-bold mb-6">
-              Estimez votre projet
+              {t('simulator_heading')}
             </h1>
             <p className="text-primary-foreground/70 text-lg">
-              Budget • Crédit • Délai — Obtenez une estimation complète et personnalisée 
-              de votre projet de construction en quelques clics.
+              {t('simulator_description')}
             </p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Escrow Explanation */}
+      <section className="py-8 bg-gold/10 border-y border-gold/20">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex flex-wrap items-center justify-center gap-8 text-sm">
+            <div className="flex items-center gap-3">
+              <Landmark className="w-5 h-5 text-gold" />
+              <span className="text-foreground">{t('escrow_bank')}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-gold" />
+              <span className="text-foreground">{t('escrow_secure')}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <FileCheck className="w-5 h-5 text-gold" />
+              <span className="text-foreground">{t('escrow_validation')}</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -236,10 +231,10 @@ export default function Simulator() {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-center gap-4 md:gap-8">
             {[
-              { num: 1, label: 'Type de projet', icon: Home },
-              { num: 2, label: 'Caractéristiques', icon: Building2 },
-              { num: 3, label: 'Financement', icon: CreditCard },
-              { num: 4, label: 'Résultats', icon: CheckCircle },
+              { num: 1, label: t('step_project_type'), icon: Home },
+              { num: 2, label: t('step_characteristics'), icon: Building2 },
+              { num: 3, label: t('step_contact'), icon: Shield },
+              { num: 4, label: t('step_results'), icon: CheckCircle },
             ].map((s, i) => (
               <div key={s.num} className="flex items-center gap-2 md:gap-4">
                 <div
@@ -281,7 +276,7 @@ export default function Simulator() {
             {step === 1 && (
               <div>
                 <h2 className="font-display text-2xl font-bold text-foreground mb-6">
-                  Quel type de projet souhaitez-vous réaliser ?
+                  {t('simulator_step1_title')}
                 </h2>
                 <div className="grid gap-4">
                   {projectTypes.map((type) => (
@@ -308,13 +303,13 @@ export default function Simulator() {
             {step === 2 && (
               <div>
                 <h2 className="font-display text-2xl font-bold text-foreground mb-6">
-                  Caractéristiques du projet
+                  {t('simulator_step2_title')}
                 </h2>
                 
                 <div className="space-y-8">
                   <div>
                     <Label className="text-foreground mb-4 block">
-                      Surface souhaitée : <span className="font-bold text-gold">{formData.surfaceArea} m²</span>
+                      {t('surface_label')} : <span className="font-bold text-gold">{formData.surfaceArea} m²</span>
                     </Label>
                     <Slider
                       value={[formData.surfaceArea]}
@@ -331,7 +326,7 @@ export default function Simulator() {
                   </div>
 
                   <div>
-                    <Label className="text-foreground mb-4 block">Localisation</Label>
+                    <Label className="text-foreground mb-4 block">{t('location_label')}</Label>
                     <div className="grid grid-cols-2 gap-3">
                       {locations.map((loc) => (
                         <button
@@ -350,7 +345,7 @@ export default function Simulator() {
                   </div>
 
                   <div>
-                    <Label className="text-foreground mb-4 block">Niveau de finition</Label>
+                    <Label className="text-foreground mb-4 block">{t('quality_label')}</Label>
                     <div className="grid grid-cols-3 gap-3">
                       {qualityLevels.map((level) => (
                         <button
@@ -373,7 +368,7 @@ export default function Simulator() {
 
                 <div className="flex gap-4 mt-8">
                   <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
-                    Retour
+                    {t('back')}
                   </Button>
                   <Button
                     variant="gold"
@@ -381,78 +376,83 @@ export default function Simulator() {
                     disabled={!formData.location || !formData.qualityLevel}
                     className="flex-1"
                   >
-                    Continuer
+                    {t('continue')}
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* Step 3: Financing */}
+            {/* Step 3: Contact Info */}
             {step === 3 && (
               <div>
                 <h2 className="font-display text-2xl font-bold text-foreground mb-6">
-                  Options de financement
+                  {t('simulator_step3_title')}
                 </h2>
                 
-                <div className="space-y-8">
+                <div className="space-y-6">
                   <div>
-                    <Label className="text-foreground mb-2 block">
-                      Montant du prêt souhaité (laisser vide pour estimer le coût total)
-                    </Label>
+                    <Label className="text-foreground mb-2 block">{t('name_label')}</Label>
                     <Input
-                      type="number"
-                      placeholder="Ex: 50000000"
-                      value={formData.loanAmount || ''}
-                      onChange={(e) => setFormData({ ...formData, loanAmount: Number(e.target.value) })}
+                      type="text"
+                      placeholder={t('name_placeholder')}
+                      value={formData.clientName}
+                      onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                     />
-                    <p className="text-sm text-foreground/50 mt-1">
-                      Si vous laissez ce champ vide, nous calculerons avec le budget total estimé.
-                    </p>
                   </div>
 
                   <div>
-                    <Label className="text-foreground mb-4 block">
-                      Durée du prêt : <span className="font-bold text-gold">{formData.loanDuration / 12} ans</span>
-                    </Label>
-                    <Slider
-                      value={[formData.loanDuration]}
-                      onValueChange={([value]) => setFormData({ ...formData, loanDuration: value })}
-                      min={12}
-                      max={300}
-                      step={12}
-                      className="my-4"
+                    <Label className="text-foreground mb-2 block">{t('email_label')}</Label>
+                    <Input
+                      type="email"
+                      placeholder={t('email_placeholder')}
+                      value={formData.clientEmail}
+                      onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
                     />
-                    <div className="flex justify-between text-sm text-foreground/50">
-                      <span>1 an</span>
-                      <span>25 ans</span>
-                    </div>
                   </div>
 
                   <div>
-                    <Label className="text-foreground mb-4 block">
-                      Taux d'intérêt annuel : <span className="font-bold text-gold">{formData.interestRate}%</span>
-                    </Label>
-                    <Slider
-                      value={[formData.interestRate]}
-                      onValueChange={([value]) => setFormData({ ...formData, interestRate: value })}
-                      min={3}
-                      max={15}
-                      step={0.5}
-                      className="my-4"
+                    <Label className="text-foreground mb-2 block">{t('phone_label')}</Label>
+                    <Input
+                      type="tel"
+                      placeholder={t('phone_placeholder')}
+                      value={formData.clientPhone}
+                      onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
                     />
-                    <div className="flex justify-between text-sm text-foreground/50">
-                      <span>3%</span>
-                      <span>15%</span>
-                    </div>
+                  </div>
+
+                  {/* Escrow Process Explanation */}
+                  <div className="bg-navy/5 border border-navy/20 rounded-xl p-6">
+                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-gold" />
+                      {t('escrow_process_title')}
+                    </h3>
+                    <ol className="space-y-3 text-sm text-foreground/80">
+                      <li className="flex items-start gap-3">
+                        <span className="w-6 h-6 bg-gold/20 text-gold rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+                        <span>{t('escrow_step1')}</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-6 h-6 bg-gold/20 text-gold rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+                        <span>{t('escrow_step2')}</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-6 h-6 bg-gold/20 text-gold rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+                        <span>{t('escrow_step3')}</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-6 h-6 bg-gold/20 text-gold rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+                        <span>{t('escrow_step4')}</span>
+                      </li>
+                    </ol>
                   </div>
                 </div>
 
                 <div className="flex gap-4 mt-8">
                   <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
-                    Retour
+                    {t('back')}
                   </Button>
                   <Button variant="gold" onClick={calculateResults} className="flex-1">
-                    Calculer mon projet
+                    {t('calculate')}
                   </Button>
                 </div>
               </div>
@@ -462,11 +462,11 @@ export default function Simulator() {
             {step === 4 && results && (
               <div>
                 <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle className="w-8 h-8 text-green-600" />
                   </div>
                   <h2 className="font-display text-2xl font-bold text-foreground">
-                    Votre estimation est prête !
+                    {t('results_ready')}
                   </h2>
                 </div>
 
@@ -475,15 +475,15 @@ export default function Simulator() {
                   <div className="bg-gradient-to-br from-gold/10 to-gold/5 border border-gold/20 rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 bg-gold/20 rounded-lg flex items-center justify-center">
-                        <Calculator className="w-5 h-5 text-gold" />
+                        <Landmark className="w-5 h-5 text-gold" />
                       </div>
-                      <h3 className="font-semibold text-foreground">Budget estimé</h3>
+                      <h3 className="font-semibold text-foreground">{t('escrow_amount')}</h3>
                     </div>
                     <p className="text-3xl font-bold text-gold mb-2">
                       {formatCurrency(results.estimatedBudget)}
                     </p>
                     <p className="text-sm text-foreground/60">
-                      {formData.surfaceArea} m² × {formatCurrency(PRICE_PER_SQM[formData.projectType]?.[formData.qualityLevel] || 300000)}/m²
+                      {t('escrow_deposit_note')}
                     </p>
                   </div>
 
@@ -491,67 +491,50 @@ export default function Simulator() {
                   <div className="bg-gradient-to-br from-navy/10 to-navy/5 border border-navy/20 rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 bg-navy/20 rounded-lg flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-navy" />
+                        <Clock className="w-5 h-5 text-navy dark:text-primary-foreground" />
                       </div>
-                      <h3 className="font-semibold text-foreground">Délai de construction</h3>
+                      <h3 className="font-semibold text-foreground">{t('construction_duration')}</h3>
                     </div>
-                    <p className="text-3xl font-bold text-navy mb-2">
-                      {results.constructionDuration.min} - {results.constructionDuration.max} mois
+                    <p className="text-3xl font-bold text-navy dark:text-primary-foreground mb-2">
+                      {results.constructionDuration.min} - {results.constructionDuration.max} {t('months')}
                     </p>
                     <p className="text-sm text-foreground/60">
-                      Estimation pour un projet {formData.qualityLevel.toLowerCase()}
+                      {t('duration_estimate')} {formData.qualityLevel.toLowerCase()}
                     </p>
                   </div>
                 </div>
 
-                {/* Credit Summary */}
-                {results.monthlyPayment > 0 && (
-                  <div className="bg-muted rounded-xl p-6 mb-8">
-                    <div className="flex items-center gap-3 mb-4">
-                      <CreditCard className="w-5 h-5 text-gold" />
-                      <h3 className="font-semibold text-foreground">Simulation de crédit</h3>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <p className="text-sm text-foreground/60">Mensualité</p>
-                        <p className="text-xl font-bold text-foreground">
-                          {formatCurrency(results.monthlyPayment)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-foreground/60">Durée</p>
-                        <p className="text-xl font-bold text-foreground">
-                          {formData.loanDuration / 12} ans
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-foreground/60">Coût total du crédit</p>
-                        <p className="text-xl font-bold text-foreground">
-                          {formatCurrency(results.totalInterest)}
-                        </p>
-                      </div>
+                {/* Escrow Security Badge */}
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 mb-8">
+                  <div className="flex items-start gap-4">
+                    <Shield className="w-8 h-8 text-green-600 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">{t('escrow_guarantee_title')}</h3>
+                      <p className="text-sm text-foreground/70">
+                        {t('escrow_guarantee_description')}
+                      </p>
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Project Summary */}
                 <div className="bg-muted rounded-xl p-6 mb-8">
-                  <h3 className="font-semibold text-foreground mb-4">Récapitulatif de votre projet</h3>
+                  <h3 className="font-semibold text-foreground mb-4">{t('project_summary')}</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-foreground/60">Type :</span>
+                      <span className="text-foreground/60">{t('type')} :</span>
                       <span className="ml-2 font-medium text-foreground">{formData.projectType}</span>
                     </div>
                     <div>
-                      <span className="text-foreground/60">Surface :</span>
+                      <span className="text-foreground/60">{t('surface')} :</span>
                       <span className="ml-2 font-medium text-foreground">{formData.surfaceArea} m²</span>
                     </div>
                     <div>
-                      <span className="text-foreground/60">Localisation :</span>
+                      <span className="text-foreground/60">{t('location')} :</span>
                       <span className="ml-2 font-medium text-foreground">{formData.location}</span>
                     </div>
                     <div>
-                      <span className="text-foreground/60">Finition :</span>
+                      <span className="text-foreground/60">{t('finish')} :</span>
                       <span className="ml-2 font-medium text-foreground">{formData.qualityLevel}</span>
                     </div>
                   </div>
@@ -559,7 +542,7 @@ export default function Simulator() {
 
                 <div className="flex gap-4">
                   <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
-                    Nouvelle simulation
+                    {t('new_simulation')}
                   </Button>
                   <Button
                     variant="gold"
@@ -567,13 +550,12 @@ export default function Simulator() {
                     disabled={isSubmitting}
                     className="flex-1"
                   >
-                    {isSubmitting ? 'Enregistrement...' : 'Être contacté'}
+                    {isSubmitting ? t('saving') : t('get_contacted')}
                   </Button>
                 </div>
 
                 <p className="text-center text-sm text-foreground/50 mt-6">
-                  * Ces estimations sont données à titre indicatif. 
-                  Contactez-nous pour un devis détaillé et personnalisé.
+                  {t('estimate_disclaimer')}
                 </p>
               </div>
             )}

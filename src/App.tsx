@@ -10,6 +10,7 @@ import Portfolio from "./pages/Portfolio";
 import Simulator from "./pages/Simulator";
 import About from "./pages/About";
 import Services from "./pages/Services";
+import FAQ from "./pages/FAQ";
 import Admin from "./pages/Admin";
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/simulateur" element={<Simulator />} />
               <Route path="/a-propos" element={<About />} />
               <Route path="/services" element={<Services />} />
+              <Route path="/faq" element={<FAQ />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminDashboard />} />
