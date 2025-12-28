@@ -1,11 +1,20 @@
 import { motion } from 'framer-motion';
-import { Shield, Building2, ArrowRight } from 'lucide-react';
+import { Shield, Building2, ArrowRight, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import heroImage from '@/assets/hero-construction.jpg';
-import logo from '@/assets/logo-pbhms.png';
+import logo from '@/assets/logo-pbh.png';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export default function HeroSection() {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+
+  const handleNavClick = (href: string) => {
+    navigate(href);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -53,8 +62,8 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6 leading-tight"
           >
-            Construire en{' '}
-            <span className="text-gradient-gold">toute confiance</span>
+            {t('hero_title_1')}{' '}
+            <span className="text-gradient-gold">{t('hero_title_2')}</span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -64,8 +73,7 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto leading-relaxed"
           >
-            Facilitateur immobilier sécurisé et structuré. De la conception à la
-            livraison, nous sécurisons votre projet immobilier.
+            {t('hero_subtitle')}
           </motion.p>
 
           {/* CTAs */}
@@ -75,18 +83,21 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.6 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Button variant="hero" size="lg" className="group" asChild>
-              <Link to="/simulateur">
-                Démarrer mon projet
-                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
+            <Button 
+              variant="hero" 
+              size="lg" 
+              className="group"
+              onClick={() => handleNavClick('/simulateur')}
+            >
+              {t('hero_cta_primary')}
+              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button 
               variant="outline-light" 
               size="lg"
-              onClick={() => scrollToSection('about')}
+              onClick={() => handleNavClick('/a-propos')}
             >
-              En savoir plus
+              {t('hero_cta_secondary')}
             </Button>
           </motion.div>
 
@@ -98,12 +109,16 @@ export default function HeroSection() {
             className="mt-16 flex flex-wrap justify-center gap-8"
           >
             <div className="flex items-center gap-3 text-primary-foreground/70">
+              <Landmark className="w-6 h-6 text-gold" />
+              <span className="text-sm font-medium">{t('hero_badge_escrow')}</span>
+            </div>
+            <div className="flex items-center gap-3 text-primary-foreground/70">
               <Shield className="w-6 h-6 text-gold" />
-              <span className="text-sm font-medium">Fonds 100% sécurisés</span>
+              <span className="text-sm font-medium">{t('hero_badge_secure')}</span>
             </div>
             <div className="flex items-center gap-3 text-primary-foreground/70">
               <Building2 className="w-6 h-6 text-gold" />
-              <span className="text-sm font-medium">Équipes internes certifiées</span>
+              <span className="text-sm font-medium">{t('hero_badge_certified')}</span>
             </div>
           </motion.div>
         </div>
